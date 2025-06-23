@@ -1,7 +1,7 @@
 [build]
   functions = "functions"
   publish = "/"
-
+ 
 [[redirects]]
   from = "/api/ir"
   to = "/.netlify/functions/ir"
