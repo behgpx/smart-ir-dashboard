@@ -13,7 +13,7 @@ let cachedToken = null;
 let tokenExpires = 0;
 
 function sign(clientId, secret, timestamp) {
-  const str = clientId + timestamp;
+  const str = secret + clientId + timestamp + secret;
   return crypto.createHmac("sha256", secret).update(str).digest("hex").toUpperCase();
 }
 
