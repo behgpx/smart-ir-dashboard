@@ -18,10 +18,10 @@ function sign(clientId, secret, timestamp) {
 }
 
 async function getToken() {
-  const now = Math.floor(Date.now()).toString();
+  const now = Date.now();
   if (cachedToken && now < tokenExpires) return cachedToken;
 
-  const t = now.toString();
+  const t = Math.floor(now).toString();
   const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
 
   const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
