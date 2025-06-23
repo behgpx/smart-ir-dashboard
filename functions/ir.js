@@ -18,7 +18,7 @@ function sign(clientId, secret, timestamp) {
 }
 
 async function getToken() {
-  const now = Date.now();
+  const now = Math.floor(Date.now()).toString();
   if (cachedToken && now < tokenExpires) return cachedToken;
 
   const t = now.toString();
@@ -46,7 +46,7 @@ async function getToken() {
 
 async function sendCommand(deviceId, code, value) {
   const token = await getToken();
-  const t = Date.now().toString();
+  const t = Math.floor(Date.now()).toString();
   const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
 
   const res = await fetch(`https://openapi.tuyaus.com/v1.0/devices/${deviceId}/commands`, {
