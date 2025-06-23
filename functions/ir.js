@@ -24,7 +24,7 @@ async function getToken() {
   const t = Math.floor(now).toString();
   const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
 
-  const response = await fetch("https://openapi.tuyacn.com/v1.0/token?grant_type=1", {
+  const response = await fetch("https://openapi.tuya.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
       "sign": signature,
@@ -49,7 +49,7 @@ async function sendCommand(deviceId, code, value) {
   const t = Math.floor(Date.now()).toString();
   const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
 
-  const res = await fetch(`https://openapi.tuyacn.com/v1.0/devices/${deviceId}/commands`, {
+  const res = await fetch(`https://openapi.tuya.com/v1.0/devices/${deviceId}/commands`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
