@@ -31,7 +31,7 @@ async function getToken() {
       "sign_method": "HMAC-SHA256",
       "t": t
     }
-  );
+  });
 
   const data = await response.json();
 
