@@ -13,7 +13,7 @@ let cachedToken = null;
 let tokenExpires = 0;
 
 function sign(clientId, secret, timestamp) {
-  const str = secret + clientId + timestamp + secret;
+  const str = clientId + timestamp;
   return crypto.createHmac("sha256", secret).update(str).digest("hex").toUpperCase();
 }
 
@@ -22,14 +22,16 @@ async function getToken() {
   if (cachedToken && now < tokenExpires) return cachedToken;
 
   const t = now.toString();
+  const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
+ 
   const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
+      "sign": signature,
       "sign_method": "HMAC-SHA256",
-      "t": t,
-      "sign": sign(CLIENT_ID, CLIENT_SECRET, t)
+      "t": t
     }
-  });
+  );
 
   const data = await response.json();
 
