@@ -17,19 +17,35 @@ function sign(clientId, secret, timestamp) {
   return crypto.createHmac("sha256", secret).update(strToSign).digest("hex").toUpperCase();
 }
 
+function generateNonce(length = 16) {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let nonce = "";
+  for (let i = 0; i < length; i++) {
+    nonce += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return nonce;
+}
+
+function signToken(clientId, secret, t, nonce, stringToSign = "") {
+  const base = clientId + t + nonce + stringToSign;
+  return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
+}
+
 async function getToken() {
   const now = Date.now();
   if (cachedToken && now < tokenExpires) return cachedToken;
 
   const t = Math.floor(now).toString();
-  const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
+  const nonce = generateNonce();
+  const signature = signToken(CLIENT_ID, CLIENT_SECRET, t, nonce);
 
   const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
       "sign": signature,
       "sign_method": "HMAC-SHA256",
-      "t": t
+      "t": t,
+      "nonce": nonce
     }
   });
 
