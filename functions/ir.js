@@ -12,11 +12,6 @@ const DEVICE_IDS = {
 let cachedToken = null;
 let tokenExpires = 0;
 
-function sign(clientId, secret, timestamp) {
-  const strToSign = clientId + timestamp;
-  return crypto.createHmac("sha256", secret).update(strToSign).digest("hex").toUpperCase();
-}
-
 function generateNonce(length = 16) {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let nonce = "";
@@ -28,6 +23,11 @@ function generateNonce(length = 16) {
 
 function signToken(clientId, secret, t, nonce, stringToSign = "") {
   const base = clientId + t + nonce + stringToSign;
+  return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
+}
+
+function signRequest(clientId, secret, t) {
+  const base = clientId + t;
   return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
 }
 
@@ -63,7 +63,7 @@ async function getToken() {
 async function sendCommand(deviceId, code, value) {
   const token = await getToken();
   const t = Math.floor(Date.now()).toString();
-  const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
+  const signature = signRequest(CLIENT_ID, CLIENT_SECRET, t);
 
   const res = await fetch(`https://openapi.tuyaus.com/v1.0/devices/${deviceId}/commands`, {
     method: "POST",
@@ -92,7 +92,7 @@ exports.handler = async (event) => {
     switch (comando) {
       case "tv_power":
         deviceId = DEVICE_IDS.tv;
-        code = "switch"; // normalmente "switch" em vez de "power"
+        code = "switch";
         value = true;
         break;
 
