@@ -1,57 +1,58 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart IR Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #1e1e1e; color: white; text-align: center; padding: 30px; }
-    h1 { color: #00d1b2; }
-    .device { margin: 20px auto; padding: 20px; background: #2d2d2d; border-radius: 10px; width: 300px; }
-    button, select { margin: 5px; padding: 10px; border-radius: 6px; border: none; font-size: 14px; }
-    button { background: #00d1b2; color: white; cursor: pointer; }
-    button:hover { background: #00a896; }
-    select { width: 130px; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+    h1 {
+      color: #00d1b2;
+    }
+    button {
+      padding: 15px 30px;
+      margin: 10px;
+      font-size: 18px;
+      background-color: #00d1b2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00b89c;
+    }
   </style>
 </head>
 <body>
   <h1>Smart IR Dashboard</h1>
-
-  <div class="device">
-    <h2>📺 TV Samsung</h2>
-    <button onclick="enviar('tv_power')">POWER</button>
-  </div>
-
-  <div class="device">
-    <h2>❄️ Ar-Condicionado</h2>
-    <button onclick="enviar('ac_power')">POWER</button><br>
-
-    <label>Temp:</label>
-    <select id="temp">
-      <option value="18">18 °C</option><option value="20">20 °C</option>
-      <option value="22" selected>22 °C</option><option value="24">24 °C</option><option value="26">26 °C</option>
-    </select>
-    <button onclick="enviar('ac_temp_'+document.getElementById('temp').value)">SET</button><br>
-
-    <label>Modo:</label>
-    <select id="mode">
-      <option value="cool">Frio</option><option value="heat">Quente</option>
-      <option value="dry">Seco</option><option value="fan">Ventilar</option>
-    </select>
-    <button onclick="enviar('ac_mode_'+document.getElementById('mode').value)">MODE</button>
+  <div>
+    <button onclick="enviar('tv_power')">TV POWER</button>
+    <button onclick="enviar('ac_power')">AR POWER</button>
+    <button onclick="enviar('ac_temp_22')">Temperatura 22°C</button>
+    <button onclick="enviar('ac_mode_cool')">Modo Frio</button>
   </div>
 
   <script>
     async function enviar(comando) {
       try {
-        const resp = await fetch('/.netlify/functions/ir', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/.netlify/functions/ir", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ comando })
         });
-        const txt = await resp.text();
-        alert(`Comando: ${comando}\nResposta: ${txt}`);
+        const data = await res.json();
+        alert("Comando: " + comando + "\nResposta: " + JSON.stringify(data));
       } catch (err) {
-        alert(`Erro: ${err}`);
+        alert("Erro ao enviar comando: " + err.message);
       }
     }
   </script>
