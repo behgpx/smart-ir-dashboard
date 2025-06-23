@@ -1,11 +1,9 @@
 {
   "name": "smart-ir-dashboard",
   "version": "1.0.0",
-  "description": "Dashboard to control Tuya Cloud devices",
-  "main": "functions/ir.js",
-  "scripts": {
-    "start": "netlify dev"
-  },
+  "description": "Painel de controle Tuya IR via Tuya Cloud API",
+  "main": "index.js",
+  "scripts": {},
   "dependencies": {
     "node-fetch": "^2.6.7"
   }
