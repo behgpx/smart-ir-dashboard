@@ -1,6 +1,6 @@
 const fetch = require("node-fetch");
 const crypto = require("crypto");
- 
+
 const CLIENT_ID = "8sq7fqrc7ajcve9aewcx";
 const CLIENT_SECRET = "0be8748bc29343bcbe4cb8d83915fff8";
 
@@ -13,8 +13,8 @@ let cachedToken = null;
 let tokenExpires = 0;
 
 function sign(clientId, secret, timestamp) {
-  const str = clientId + timestamp;
-  return crypto.createHmac("sha256", secret).update(str).digest("hex").toUpperCase();
+  const strToSign = clientId + timestamp;
+  return crypto.createHmac("sha256", secret).update(strToSign).digest("hex").toUpperCase();
 }
 
 async function getToken() {
@@ -23,7 +23,7 @@ async function getToken() {
 
   const t = now.toString();
   const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
- 
+
   const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
@@ -35,7 +35,6 @@ async function getToken() {
 
   const data = await response.json();
 
-  // 👇 Essa verificação evita o erro de undefined
   if (!data.success || !data.result || !data.result.access_token) {
     throw new Error("Falha ao obter token: " + JSON.stringify(data));
   }
@@ -47,13 +46,18 @@ async function getToken() {
 
 async function sendCommand(deviceId, code, value) {
   const token = await getToken();
+  const t = Date.now().toString();
+  const signature = sign(CLIENT_ID, CLIENT_SECRET, t);
 
   const res = await fetch(`https://openapi.tuyaus.com/v1.0/devices/${deviceId}/commands`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${token}`,
-      "client_id": CLIENT_ID
+      "client_id": CLIENT_ID,
+      "sign": signature,
+      "sign_method": "HMAC-SHA256",
+      "t": t
     },
     body: JSON.stringify({
       commands: [{ code, value }]
@@ -67,18 +71,19 @@ exports.handler = async (event) => {
   try {
     const { comando } = JSON.parse(event.body);
 
-    // Mapeia o comando vindo do botão do painel
     let deviceId, code, value;
 
     switch (comando) {
       case "tv_power":
         deviceId = DEVICE_IDS.tv;
-        code = "power"; value = true;
+        code = "switch"; // normalmente "switch" em vez de "power"
+        value = true;
         break;
 
       case "ac_power":
         deviceId = DEVICE_IDS.ar;
-        code = "switch"; value = true;
+        code = "switch";
+        value = true;
         break;
 
       case "ac_temp_18":
@@ -97,7 +102,7 @@ exports.handler = async (event) => {
       case "ac_mode_fan":
         deviceId = DEVICE_IDS.ar;
         code = "mode";
-        value = comando.split("_")[2]; // cool, heat, dry, fan
+        value = comando.split("_")[2];
         break;
 
       default:
