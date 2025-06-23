@@ -22,7 +22,7 @@ async function getToken() {
   if (cachedToken && now < tokenExpires) return cachedToken;
 
   const t = now.toString();
-  const res = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
+  const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
       "sign_method": "HMAC-SHA256",
@@ -31,7 +31,13 @@ async function getToken() {
     }
   });
 
-  const data = await res.json();
+  const data = await response.json();
+
+  // 👇 Essa verificação evita o erro de undefined
+  if (!data.success || !data.result || !data.result.access_token) {
+    throw new Error("Falha ao obter token: " + JSON.stringify(data));
+  }
+
   cachedToken = data.result.access_token;
   tokenExpires = now + (data.result.expire_time * 1000) - 60000;
   return cachedToken;
