@@ -22,7 +22,7 @@ async function getToken() {
   if (cachedToken && now < tokenExpires) return cachedToken;
 
   const t = now.toString();
-  const res = await fetch("https://openapi.tuya.com/v1.0/token?grant_type=1", {
+  const res = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
     headers: {
       "client_id": CLIENT_ID,
       "sign_method": "HMAC-SHA256",
@@ -40,7 +40,7 @@ async function getToken() {
 async function sendCommand(deviceId, code, value) {
   const token = await getToken();
 
-  const res = await fetch(`https://openapi.tuya.com/v1.0/devices/${deviceId}/commands`, {
+  const res = await fetch(`https://openapi.tuyaus.com/v1.0/devices/${deviceId}/commands`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
