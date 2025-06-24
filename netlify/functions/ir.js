@@ -1,131 +1,46 @@
-const crypto = require("crypto");
 const fetch = require("node-fetch");
 
-const CLIENT_ID = "8sq7fqrc7ajcve9aewcx";       // <-- CONFIRA esse valor
-const CLIENT_SECRET = "0be8748bc29343bcbe4cb8d83915fff8";   // <-- CONFIRA esse valor
+const SMART_IR_IP = "191.205.228.228"; // IP do seu Smart IR
 
-const DEVICE_IDS = {
-  tv: "ebf86f302f435f9a1c0lbs",
-  ar: "eb09c8cc7878efca246sgq"
+const COMMANDS = {
+  tv_power: { device: "tv", action: "power" },
+  ac_power: { device: "ac", action: "power" },
+  ac_mode_cool: { device: "ac", action: "mode", value: "cool" },
+  ac_mode_heat: { device: "ac", action: "mode", value: "heat" },
+  ac_mode_dry: { device: "ac", action: "mode", value: "dry" },
+  ac_mode_fan: { device: "ac", action: "mode", value: "fan" },
+  // temperaturas de 18 a 30
+  ...Object.fromEntries(Array.from({length: 13}, (_, i) => {
+    const temp = 18 + i;
+    return [`ac_temp_${temp}`, { device: "ac", action: "temp", value: temp }];
+  }))
 };
-
-let cachedToken = null;
-let tokenExpires = 0;
-
-function generateNonce(length = 16) {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let nonce = "";
-  for (let i = 0; i < length; i++) {
-    nonce += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return nonce;
-}
-
-function signToken(clientId, secret, t, nonce) {
-  const strToSign = clientId + t + nonce;
-  return crypto.createHmac("sha256", secret).update(strToSign).digest("hex").toUpperCase();
-}
-
-async function getToken() {
-  const now = Date.now();
-  if (cachedToken && now < tokenExpires) return cachedToken;
-
-  const t = now.toString();
-  const nonce = generateNonce();
-  const signature = signToken(CLIENT_ID, CLIENT_SECRET, t, nonce);
-
-  const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
-    method: "GET",
-    headers: {
-      "client_id": CLIENT_ID,
-      "sign": signature,
-      "sign_method": "HMAC-SHA256",
-      "t": t,
-      "nonce": nonce
-    }
-  });
-
-  const data = await response.json();
-
-  if (!data.success || !data.result || !data.result.access_token) {
-    throw new Error("Falha ao obter token: " + JSON.stringify(data));
-  }
-
-  cachedToken = data.result.access_token;
-  tokenExpires = now + (data.result.expire_time * 1000) - 60000;
-  return cachedToken;
-}
-
-async function sendCommand(deviceId, code, value) {
-  const token = await getToken();
-  const t = Math.floor(Date.now()).toString();
-  const signature = signRequest(CLIENT_ID, CLIENT_SECRET, t);
-
-  const res = await fetch(`https://openapi.tuyaus.com/v1.0/devices/${deviceId}/commands`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
-      "client_id": CLIENT_ID,
-      "sign": signature,
-      "sign_method": "HMAC-SHA256",
-      "t": t
-    },
-    body: JSON.stringify({
-      commands: [{ code, value }]
-    })
-  });
-
-  return res.json();
-}
 
 exports.handler = async (event) => {
   try {
     const { comando } = JSON.parse(event.body);
+    const payload = COMMANDS[comando];
 
-    let deviceId, code, value;
-
-    switch (comando) {
-      case "tv_power":
-        deviceId = DEVICE_IDS.tv;
-        code = "switch";
-        value = true;
-        break;
-
-      case "ac_power":
-        deviceId = DEVICE_IDS.ar;
-        code = "switch";
-        value = true;
-        break;
-
-      case "ac_temp_17":  
-      case "ac_temp_18":
-      case "ac_temp_20":
-      case "ac_temp_22":
-      case "ac_temp_24":
-      case "ac_temp_26":
-        deviceId = DEVICE_IDS.ar;
-        code = "temp_set";
-        value = parseInt(comando.split("_")[2]);
-        break;
-
-      case "ac_mode_cool":
-      case "ac_mode_heat":
-      case "ac_mode_dry":
-      case "ac_mode_fan":
-        deviceId = DEVICE_IDS.ar;
-        code = "mode";
-        value = comando.split("_")[2];
-        break;
-
-      default:
-        return { statusCode: 400, body: "Comando não reconhecido" };
+    if (!payload) {
+      return { statusCode: 400, body: "Comando inválido" };
     }
 
-    const result = await sendCommand(deviceId, code, value);
-    return { statusCode: 200, body: JSON.stringify(result) };
+    const res = await fetch(`http://${SMART_IR_IP}/ir`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.text();
+    return {
+      statusCode: 200,
+      body: data
+    };
 
   } catch (err) {
-    return { statusCode: 500, body: `Erro: ${err.message}` };
+    return {
+      statusCode: 500,
+      body: `Erro: ${err.message}`
+    };
   }
 };
