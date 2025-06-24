@@ -15,38 +15,66 @@
 </head>
 <body>
   <h1>Smart IR Dashboard</h1>
+
   <div class="device">
     <h2>📺 TV Samsung</h2>
     <button onclick="enviar('tv_power')">POWER</button>
   </div>
+
   <div class="device">
     <h2>❄️ Ar-Condicionado</h2>
     <button onclick="enviar('ac_power')">POWER</button><br>
+
     <label>Temp:</label>
     <select id="temp">
       <option value="18">18 °C</option><option value="20">20 °C</option>
       <option value="22" selected>22 °C</option><option value="24">24 °C</option><option value="26">26 °C</option>
     </select>
-    <button onclick="enviar('ac_temp_'+document.getElementById('temp').value)">SET</button><br>
+    <button onclick="enviar('ac_temp_' + document.getElementById('temp').value)">SET</button><br>
+
     <label>Modo:</label>
     <select id="mode">
       <option value="cool">Frio</option><option value="heat">Quente</option>
       <option value="dry">Seco</option><option value="fan">Ventilar</option>
     </select>
-    <button onclick="enviar('ac_mode_'+document.getElementById('mode').value)">MODE</button>
+    <button onclick="enviar('ac_mode_' + document.getElementById('mode').value)">MODE</button>
   </div>
+
   <script>
+    const SMART_IR_IP = "191.205.228.228";
+
+    const COMMANDS = {
+      tv_power: { device: "tv", action: "power" },
+      ac_power: { device: "ac", action: "power" },
+      ac_mode_cool: { device: "ac", action: "mode", value: "cool" },
+      ac_mode_heat: { device: "ac", action: "mode", value: "heat" },
+      ac_mode_dry: { device: "ac", action: "mode", value: "dry" },
+      ac_mode_fan: { device: "ac", action: "mode", value: "fan" },
+      // Temperaturas de 18 a 30 graus
+      ...Object.fromEntries(Array.from({length: 13}, (_, i) => {
+        const temp = 18 + i;
+        return [`ac_temp_${temp}`, { device: "ac", action: "temp", value: temp }];
+      }))
+    };
+
     async function enviar(comando) {
+      const payload = COMMANDS[comando];
+      if (!payload) {
+        alert("Comando inválido: " + comando);
+        return;
+      }
+
       try {
-        const resp = await fetch('/.netlify/functions/ir', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comando })
+        const res = await fetch(`http://${SMART_IR_IP}/ir`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
-        const txt = await resp.text();
-        alert(`Comando: ${comando}\nResposta: ${txt}`);
+
+        const resposta = await res.text();
+        alert(`Comando: ${comando}\nResposta: ${resposta}`);
       } catch (err) {
-        alert(`Erro: ${err}`);
+        alert(`Erro ao enviar comando: ${err}`);
       }
     }
   </script>
