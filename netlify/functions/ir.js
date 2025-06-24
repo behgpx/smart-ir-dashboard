@@ -21,8 +21,8 @@ function generateNonce(length = 16) {
   return nonce;
 }
 
-function signToken(clientId, secret, t, nonce, stringToSign = "") {
-  const base = clientId + t + nonce + stringToSign;
+function signToken(clientId, secret, t, nonce) {
+  const base = clientId + t + nonce + "";
   return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
 }
 
