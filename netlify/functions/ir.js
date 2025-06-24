@@ -1,13 +1,8 @@
-const fetch = require("node-fetch");
 const crypto = require("crypto");
+const fetch = require("node-fetch");
 
-const CLIENT_ID = "8sq7fqrc7ajcve9aewcx";
-const CLIENT_SECRET = "0be8748bc29343bcbe4cb8d83915fff8";
-
-const DEVICE_IDS = {
-  tv: "ebf86f302f435f9a1c0lbs",
-  ar: "eb09c8cc7878efca246sgq"
-};
+const CLIENT_ID = "8sq7fqrc7ajcve9aewcx";       // <-- CONFIRA esse valor
+const CLIENT_SECRET = "0be8748bc29343bcbe4cb8d83915fff8";   // <-- CONFIRA esse valor
 
 let cachedToken = null;
 let tokenExpires = 0;
@@ -22,24 +17,20 @@ function generateNonce(length = 16) {
 }
 
 function signToken(clientId, secret, t, nonce) {
-  const base = clientId + t + nonce + "";
-  return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
-}
-
-function signRequest(clientId, secret, t) {
-  const base = clientId + t;
-  return crypto.createHmac("sha256", secret).update(base).digest("hex").toUpperCase();
+  const strToSign = clientId + t + nonce;
+  return crypto.createHmac("sha256", secret).update(strToSign).digest("hex").toUpperCase();
 }
 
 async function getToken() {
   const now = Date.now();
   if (cachedToken && now < tokenExpires) return cachedToken;
 
-  const t = Math.floor(now).toString();
+  const t = now.toString();
   const nonce = generateNonce();
   const signature = signToken(CLIENT_ID, CLIENT_SECRET, t, nonce);
 
   const response = await fetch("https://openapi.tuyaus.com/v1.0/token?grant_type=1", {
+    method: "GET",
     headers: {
       "client_id": CLIENT_ID,
       "sign": signature,
