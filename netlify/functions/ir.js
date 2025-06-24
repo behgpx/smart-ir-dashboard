@@ -4,6 +4,11 @@ const fetch = require("node-fetch");
 const CLIENT_ID = "8sq7fqrc7ajcve9aewcx";       // <-- CONFIRA esse valor
 const CLIENT_SECRET = "0be8748bc29343bcbe4cb8d83915fff8";   // <-- CONFIRA esse valor
 
+const DEVICE_IDS = {
+  tv: "ebf86f302f435f9a1c0lbs",
+  ar: "eb09c8cc7878efca246sgq"
+};
+
 let cachedToken = null;
 let tokenExpires = 0;
 
@@ -93,6 +98,7 @@ exports.handler = async (event) => {
         value = true;
         break;
 
+      case "ac_temp_17":  
       case "ac_temp_18":
       case "ac_temp_20":
       case "ac_temp_22":
